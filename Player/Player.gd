@@ -4,27 +4,61 @@ var velocity = Vector2.ZERO
 var speed = 5.0
 var max_speed = 400.0
 var rot_speed = 5.0
+var planet_mass = 10000.0
 
 var nose = Vector2(0,-60)
 
 var health = 10
 
+var shields = 0
+var shield_regen = 0.05
+var shield_max = 50
+
+var shield_textures = [
+	preload("res://Assets/shield1.png"),
+	preload("res://Assets/shield2.png"),
+	preload("res://Assets/shield3.png")
+]
+
 onready var Bullet = load("res://Player/Bullet.tscn")
 onready var Explosion = load("res://Effects/Explosion.tscn")
 
 var Effects = null
+var Planet = null
+
+
 
 func _ready():
 	pass
 
 
 func _physics_process(_delta):
+	Planet = get_node_or_null("/root/Game/Planet")
+	if Planet != null:
+		var gravity = global_position.direction_to(Planet.global_position)*1/pow(global_position.distance_to(Planet.global_position),2)*planet_mass
+		velocity += gravity
 	velocity += get_input()*speed
 	velocity = velocity.normalized() * clamp(velocity.length(), 0, max_speed)
 	velocity = move_and_slide(velocity, Vector2.ZERO)
 	position.x = wrapf(position.x, 0.0, Global.VP.x)
 	position.y = wrapf(position.y, 0.0, Global.VP.y)
 	
+	shields = clamp(shields + shield_regen, -100, shield_max)
+	if shields >= shield_max:
+		$Shield.show()
+	elif shields >= shield_max * 0.75:
+		$Shield.show()
+		$Shield/Sprite.texture = shield_textures[2]
+	elif shields >= shield_max*0.4:
+		$Shield.show()
+		$Shield/Sprite.texture = shield_textures[1]
+	elif shields > 0:
+		$Shield.show()
+		$Shield/Sprite.texture = shield_textures[0]
+	else:
+		$Shield.hide()
+
+
 func get_input():
 	var dir = Vector2.ZERO
 	$Exhaust.hide()
@@ -65,3 +99,16 @@ func _on_Area2D_body_entered(body):
 			body.damage(100)
 		damage(100)
 
+
+
+func _on_Shield_area_entered(area):
+	if "damage" in area and shields >= 0 and not area.is_in_group("friendly"):
+		shields -= area.damage
+		area.queue_free()
+
+
+
+func _on_Shield_body_entered(body):
+	if body != self and not body.is_in_group("friendly") and body.has_method("damage") and shields >= 0:
+		shields -= 100
+		body.damage(100)
