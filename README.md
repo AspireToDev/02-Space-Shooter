@@ -7,7 +7,10 @@ A simple 2D space shooter
 ## Implementation
 Keyboard control, top-down ship that can shoot asteroids and an enemy
 
-Bonus: 
+## Bonus Features:
+
+Two Enemies with faster bullet speeds to balance the players sheild advantage
+
 Planet (w/ Gravity)
 
 More advanced ship models for player and enemy
